@@ -270,8 +270,12 @@
 		var el = _findParent(ev.srcElement, 'todo');
 		var todo = _getData(el);
 		if (!ev.shiftKey && ev.keyCode == 13) {
-			todo.done = !todo.done;
-			this.update(todo);
+			if (_trim(todo.text) === '') {
+				this.delete(todo);
+			} else {
+				todo.done = !todo.done;
+				this.update(todo);
+			}
 			_stopEventPropagation(ev);
 		} else if ((ev.metaKey && ev.keyCode == 8) || (ev.keyCode == 46 && ev.shiftKey)) {
 			this.delete(todo);
