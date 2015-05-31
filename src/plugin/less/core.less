@@ -1,0 +1,141 @@
+@keyframes checklist-flipOutX {
+	0% {
+		transform: perspective(400px);
+	}
+	30% {
+		transform: perspective(400px) rotate3d(1, 0, 0, -20deg);
+		opacity: 1;
+	}
+	100% {
+		transform: perspective(400px) rotate3d(1, 0, 0, 90deg);
+		opacity: 0;
+	}
+}
+@keyframes checklist-flipInX {
+	0% {
+		transform: perspective(400px) rotate3d(1, 0, 0, 90deg);
+		animation-timing-function: ease-in;
+		opacity: 0;
+	}
+	40% {
+		transform: perspective(400px) rotate3d(1, 0, 0, -20deg);
+		animation-timing-function: ease-in;
+	}
+	60% {
+		transform: perspective(400px) rotate3d(1, 0, 0, 10deg);
+		opacity: 1;
+	}
+	80% {
+		transform: perspective(400px) rotate3d(1, 0, 0, -5deg);
+	}
+	100% {
+		transform: perspective(400px);
+	}
+}
+@keyframes checklist-pulse {
+	0% {
+		transform: scale3d(1, 1, 1);
+	}
+	50% {
+		transform: scale3d(0.98, 0.98, 0.98);
+	}
+	100% {
+		transform: scale3d(1, 1, 1);
+	}
+}
+.checklist-pulse {
+	animation-duration: 0.25s;
+	animation-fill-mode: both;
+	animation-name: checklist-pulse;
+}
+.checklist-flipInX {
+	animation-fill-mode: both;
+	animation-duration: .4s;
+	animation-name: checklist-flipInX;
+	backface-visibility: visible !important;
+}
+.checklist-flipOutX {
+	animation-fill-mode: both;
+	animation-duration: .4s;
+	animation-name: checklist-flipOutX;
+	backface-visibility: visible !important;
+}
+.checklist {
+	* {
+		box-sizing: border-box;
+	}
+	[contenteditable=true]:empty:not(:focus):before{
+		content:attr(placeholder);
+		color: #eee;
+	}
+	.todo-insert {
+		margin: 0px;
+		padding: 0px;
+		color: #333;
+		list-style: none;
+		display: flex;
+		flex-direction: row;
+		box-sizing: border-box;
+		.todo-text {
+			box-shadow: inset 0px 0px 2px 0px rgba(50, 50, 50, 0.2);
+			margin-bottom: 10px;
+			border-radius: 2px;
+			padding: 5px;
+			outline: none;
+			flex: 1;
+		}
+		.todo-text:focus {
+			box-shadow: inset 0px 0px 2px 0px rgba(50, 50, 50, 0.5);
+		}
+	}
+	.todo-list {
+		margin: 0px;
+		padding: 0px;
+		color: #333;
+		list-style: none;
+		display: flex;
+		flex-direction: column;
+		box-sizing: border-box;
+		&:empty:before {
+			text-align: center;
+			color: #999;
+			content: 'Nothing todo :)';
+		}
+		.todo {
+			padding: 5px 2px;
+			display: flex;
+			flex-direction: row;
+			border-bottom: 1px solid #f8f8f8;
+			.todo-text {
+				flex: 1;
+				outline: none;
+				border: none;
+			}
+			.todo-checker {
+				padding-top: 1px;
+				font-size: 14px;
+				width: 25px;
+				cursor: pointer;
+				color: #999;
+			}
+			&[done=true] {
+				text-decoration: line-through;
+				color: #ccc;
+				.todo-checker{
+					color: blue;
+				}
+			}
+			.todo-delete {
+				width: 25px;
+				text-align: right;
+				cursor: pointer;
+				opacity: 0.5;
+				color: #999;
+			}
+			.todo-delete:hover {
+				opacity: 1;
+				color: red;
+			}
+		}
+	}
+}
