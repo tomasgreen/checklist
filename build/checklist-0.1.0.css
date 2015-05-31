@@ -125,8 +125,8 @@
 .checklist-flipInX {
   -webkit-animation-fill-mode: both;
   animation-fill-mode: both;
-  -webkit-animation-duration: .4s;
-  animation-duration: .4s;
+  -webkit-animation-duration: .25s;
+  animation-duration: .25s;
   -webkit-animation-name: checklist-flipInX;
   animation-name: checklist-flipInX;
   -webkit-backface-visibility: visible !important;
@@ -135,8 +135,8 @@
 .checklist-flipOutX {
   -webkit-animation-fill-mode: both;
   animation-fill-mode: both;
-  -webkit-animation-duration: .4s;
-  animation-duration: .4s;
+  -webkit-animation-duration: .25s;
+  animation-duration: .25s;
   -webkit-animation-name: checklist-flipOutX;
   animation-name: checklist-flipOutX;
   -webkit-backface-visibility: visible !important;
@@ -147,33 +147,30 @@
 }
 .checklist [contenteditable=true]:empty:not(:focus):before {
   content: attr(placeholder);
-  color: #eee;
+  color: #ccc;
 }
 .checklist .todo-insert {
-  margin: 0px;
-  padding: 0px;
-  color: #333;
-  list-style: none;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
+  margin: 0px;
+  padding: 8px;
+  color: #333;
+  list-style: none;
   -webkit-flex-direction: row;
   -ms-flex-direction: row;
   flex-direction: row;
   box-sizing: border-box;
+  border-bottom: 1px solid #f8f8f8;
+}
+.checklist .todo-insert .todo-input-icon {
+  width: 25px;
 }
 .checklist .todo-insert .todo-text {
-  box-shadow: inset 0px 0px 2px 0px rgba(50, 50, 50, 0.2);
-  margin-bottom: 10px;
-  border-radius: 2px;
-  padding: 5px;
   outline: none;
   -webkit-flex: 1;
   -ms-flex: 1;
   flex: 1;
-}
-.checklist .todo-insert .todo-text:focus {
-  box-shadow: inset 0px 0px 2px 0px rgba(50, 50, 50, 0.5);
 }
 .checklist .todo-list {
   margin: 0px;
@@ -189,12 +186,14 @@
   box-sizing: border-box;
 }
 .checklist .todo-list:empty:before {
+  display: block;
   text-align: center;
+  padding: 8px;
   color: #999;
   content: 'Nothing todo :)';
 }
 .checklist .todo-list .todo {
-  padding: 5px 2px;
+  padding: 8px;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;

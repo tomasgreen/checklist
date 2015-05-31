@@ -7,7 +7,7 @@
 	 27-31 ulla
 	 29-30 sara
 	*/
-	function _guid(todo, cb) {
+	function _guid(todo, cb, newTodo) {
 		function s4() {
 			return Math.floor((1 + Math.random()) * 0x10000)
 				.toString(16)
@@ -15,23 +15,17 @@
 		}
 		var id = s4() + s4() + '-' + s4() + '-' + s4() + '-' +
 			s4() + '-' + s4() + s4() + s4();
-		cb(todo, id);
+		cb(todo, id, newTodo);
 	}
 
 	function _trim(str) {
-		return str.replace(' ').replace(/(<([^>]+)>)/ig, "");
+		return str.replace(/(<([^>]+)>)/ig, '').replace(/\s/ig, '').replace(/&nbsp;/gi, '');
 	}
 
 	function _extend(sup, obj) {
 		obj.prototype = Object.create(sup.prototype);
 		obj.prototype.constructor = obj;
 		return obj;
-	}
-
-	function _removeChildren(el) {
-		if (!el || !el.firstChild) return;
-		el.removeChild(el.firstChild);
-		_removeChildren(el);
 	}
 
 	function _createElement(type, attr, parent, html) {
@@ -92,10 +86,6 @@
 		_on(el, 'touchcancel touchleave touchmove', function(ev) {
 			t = false;
 		});
-	}
-
-	function _tapOff(el, func) {
-		_off(el, 'touchstart touchend touchcancel click', func);
 	}
 
 	function _each(o, func) {
@@ -195,12 +185,13 @@
 		iconChecked: '<span class="fa fa-check-square-o"></span>',
 		iconUnchecked: '<span class="fa fa-square-o"></span>',
 		iconDelete: '<span class="fa fa-trash-o"></span>',
-		iconAdd: '<span class="fa fa-plus"></span>',
+		iconInput: '<span class="fa fa-chevron-right"></span>',
 		onDelete: null,
 		onInsert: null,
 		onDone: null,
 		onUpdate: null,
-		placeholder: 'Write here',
+		showDeleteButton: false,
+		placeholder: 'Write here and press enter',
 		guidFunction: _guid
 	};
 
@@ -209,60 +200,98 @@
 		this.opt = _setOptions(options);
 
 		this.insertEl = _createElement('div.todo-insert', null, this.container);
+		_createElement('div.todo-input-icon', null, this.insertEl, this.opt.iconInput);
 		this.insertTextEl = _createElement('div.todo-text', {
 			contenteditable: true,
+			spellcheck: false,
 			placeholder: this.opt.placeholder
 		}, this.insertEl);
 		this.listEl = _createElement('div.todo-list', null, this.container);
 		if (data) {
 			for (var i in data) {
-				this.insert(data[i]);
+				this.insertWithId(data[i], null, false);
 			}
 		}
-		_on(this.insertTextEl, 'keydown', this.insertEvent.bind(this));
+		_on(this.insertTextEl, 'keydown', this.insertKeydownEvent.bind(this));
+		_on(this.insertTextEl, 'blur', this.insertBlurEvent.bind(this));
 	};
 	Base.prototype.insert = function(todo) {
-		if (todo.todo_id === undefined) this.opt.guidFunction(todo, this.insertWithId.bind(this));
-		else this.insertWithId();
+		if (todo.todo_id === undefined) this.opt.guidFunction(todo, this.insertWithId.bind(this), true);
+		else this.insertWithId(todo, null, true);
 	};
-	Base.prototype.insertWithId = function(todo, id) {
+	Base.prototype.insertWithId = function(todo, id, newTodo) {
 		if (id) todo.todo_id = id;
 		var el = _createElement('div.todo', {
 			'done': todo.done,
-			'todo-id': todo.todo_id
+			'todo-id': todo.todo_id,
+			'data-original-text': todo.text
 		});
 		var c = _createElement('div.todo-checker', null, el, todo.done ? this.opt.iconChecked : this.opt.iconUnchecked);
 		var t = _createElement('div.todo-text', {
-			contenteditable: true
+			contenteditable: true,
+			spellcheck: false
 		}, el, todo.text);
-		var d = _createElement('div.todo-delete', null, el, this.opt.iconDelete);
-
+		if (this.opt.showDeleteButton) {
+			var d = _createElement('div.todo-delete', null, el, this.opt.iconDelete);
+			_tapOn(d, this.deleteEvent.bind(this));
+		}
 		_tapOn(c, this.checkEvent.bind(this));
-		_tapOn(d, this.deleteEvent.bind(this));
 		_on(t, 'blur', this.updateEvent.bind(this));
+		_on(t, 'keydown', this.todoKeydownEvent.bind(this));
 		this.listEl.insertBefore(el, this.listEl.firstChild);
-		if (this.opt.onInsert) this.opt.onInsert(el, todo);
-		_animateCSS(el, 'checklist-flipInX');
+		if (newTodo) {
+			if (this.opt.onInsert) this.opt.onInsert(el, todo);
+			_animateCSS(el, 'checklist-flipInX');
+		}
 	};
 	Base.prototype.delete = function(todo) {
 		var el = this.listEl.querySelector('[todo-id="' + todo.todo_id + '"]');
 		if (!el) return;
-
+		var _this = this;
 		_animateCSS(el, 'checklist-flipOutX', null, function(ev) {
+			if (el.nextSibling) el.nextSibling.querySelector('.todo-text').focus();
+			else if (el.previousSibling) el.previousSibling.querySelector('.todo-text').focus();
+			else _this.insertTextEl.focus();
 			_removeNode(el);
-			if (this.opt.onDelete) this.opt.onDelete(el, todo);
+			if (_this.opt.onDelete) _this.opt.onDelete(el, todo);
 		});
 	};
 	Base.prototype.update = function(todo) {
 		var el = this.listEl.querySelector('[todo-id="' + todo.todo_id + '"]');
 		if (!el) return;
-		var c = e.querySelector('.todo-checker');
+		var c = el.querySelector('.todo-checker');
 		_attr(el, 'done', todo.done);
-		el.innerHTML = todo.text;
+		_attr(el, 'data-original-text', todo.text);
+		el.querySelector('.todo-text').innerHTML = todo.text;
 		c.innerHTML = (todo.done) ? this.opt.iconChecked : this.opt.iconUnchecked;
 		_animateCSS(el, 'checklist-pulse');
 	};
-	Base.prototype.insertEvent = function(ev) {
+	Base.prototype.todoKeydownEvent = function(ev) {
+		var el = _findParent(ev.srcElement, 'todo');
+		var todo = _getData(el);
+		if (!ev.shiftKey && ev.keyCode == 13) {
+			todo.done = !todo.done;
+			this.update(todo);
+			_stopEventPropagation(ev);
+		} else if ((ev.metaKey && ev.keyCode == 8) || (ev.keyCode == 46 && ev.shiftKey)) {
+			this.delete(todo);
+			_stopEventPropagation(ev);
+		} else if (ev.altKey && ev.keyCode == 38) {
+			if (el.previousSibling) el.previousSibling.querySelector('.todo-text').focus();
+			else this.insertTextEl.focus();
+			_stopEventPropagation(ev);
+		} else if (ev.altKey && ev.keyCode == 40) {
+			if (el.nextSibling) el.nextSibling.querySelector('.todo-text').focus();
+			_stopEventPropagation(ev);
+		}
+	};
+	Base.prototype.insertBlurEvent = function(ev) {
+		var text = _trim(this.insertTextEl.innerHTML);
+		if (text === '' || text === null) {
+			this.insertTextEl.innerHTML = '';
+		}
+	};
+	Base.prototype.insertKeydownEvent = function(ev) {
 		var text = this.insertTextEl.innerHTML;
 		if (!ev.shiftKey && ev.keyCode == 13 && _trim(text) !== '') {
 			var todo = {
@@ -271,6 +300,9 @@
 			};
 			this.insert(todo);
 			this.insertTextEl.innerHTML = '';
+			_stopEventPropagation(ev);
+		} else if (ev.altKey && ev.keyCode == 40) {
+			if (this.listEl.firstChild) this.listEl.firstChild.querySelector('.todo-text').focus();
 			_stopEventPropagation(ev);
 		}
 	};
@@ -281,17 +313,18 @@
 		todo.done = !todo.done;
 		c.innerHTML = (todo.done) ? this.opt.iconChecked : this.opt.iconUnchecked;
 		_attr(el, 'done', todo.done);
-
 		if (this.opt.onUpdate) this.opt.onUpdate(el, todo);
+		_animateCSS(el, 'checklist-pulse');
 	};
 	Base.prototype.updateEvent = function(ev) {
 		var el = _findParent(ev.srcElement, 'todo');
 		var todo = _getData(el);
+		if (el.getAttribute('data-original-text') == todo.text) return;
+		_attr(el, 'data-original-text', todo.text);
 		if (this.opt.onUpdate) this.opt.onUpdate(el, todo);
 		_animateCSS(el, 'checklist-pulse');
 	};
 	Base.prototype.deleteEvent = function(ev) {
-		console.log(ev);
 		var el = _findParent(ev.srcElement, 'todo');
 		var todo = _getData(el);
 		var _this = this;

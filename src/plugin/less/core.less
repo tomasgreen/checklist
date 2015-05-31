@@ -50,13 +50,13 @@
 }
 .checklist-flipInX {
 	animation-fill-mode: both;
-	animation-duration: .4s;
+	animation-duration: .25s;
 	animation-name: checklist-flipInX;
 	backface-visibility: visible !important;
 }
 .checklist-flipOutX {
 	animation-fill-mode: both;
-	animation-duration: .4s;
+	animation-duration: .25s;
 	animation-name: checklist-flipOutX;
 	backface-visibility: visible !important;
 }
@@ -66,26 +66,23 @@
 	}
 	[contenteditable=true]:empty:not(:focus):before{
 		content:attr(placeholder);
-		color: #eee;
+		color: #ccc;
 	}
 	.todo-insert {
+		display: flex;
 		margin: 0px;
-		padding: 0px;
+		padding: 8px;
 		color: #333;
 		list-style: none;
-		display: flex;
 		flex-direction: row;
 		box-sizing: border-box;
+		border-bottom: 1px solid #f8f8f8;
+		.todo-input-icon {
+			width: 25px;
+		}
 		.todo-text {
-			box-shadow: inset 0px 0px 2px 0px rgba(50, 50, 50, 0.2);
-			margin-bottom: 10px;
-			border-radius: 2px;
-			padding: 5px;
 			outline: none;
 			flex: 1;
-		}
-		.todo-text:focus {
-			box-shadow: inset 0px 0px 2px 0px rgba(50, 50, 50, 0.5);
 		}
 	}
 	.todo-list {
@@ -97,12 +94,14 @@
 		flex-direction: column;
 		box-sizing: border-box;
 		&:empty:before {
+			display: block;
 			text-align: center;
+			padding: 8px;
 			color: #999;
 			content: 'Nothing todo :)';
 		}
 		.todo {
-			padding: 5px 2px;
+			padding: 8px;
 			display: flex;
 			flex-direction: row;
 			border-bottom: 1px solid #f8f8f8;

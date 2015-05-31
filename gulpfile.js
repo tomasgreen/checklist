@@ -12,7 +12,7 @@ var gulp = require('gulp'),
 	webServerNode, http = require('http'),
 	pluginFileName = require('./package.json').name + '-' + require('./package.json').version;
 
-gulp.task('watch', function () {
+gulp.task('watch', function() {
 	gulp.watch('./src/plugin/less/**/*.less', ['plugin-less']);
 	gulp.watch('./src/plugin/js/**/*.js', ['plugin-js']);
 	gulp.watch('./src/example/less/**/*.less', ['example-less']);
@@ -21,7 +21,7 @@ gulp.task('watch', function () {
 	gulp.watch('./webserver.js', ['webserver']);
 });
 
-gulp.task('plugin-js', function () {
+gulp.task('plugin-js', function() {
 	gulp.src('./src/plugin/js/**/*.js')
 		.pipe(concat(pluginFileName + '.js'))
 		.pipe(gulp.dest('./build/'))
@@ -31,7 +31,7 @@ gulp.task('plugin-js', function () {
 		.pipe(gulp.dest('./build/'))
 		.pipe(gulp.dest('./example/static/'));
 });
-gulp.task('plugin-less', function () {
+gulp.task('plugin-less', function() {
 	gulp.src('./src/plugin/less/core.less')
 		.pipe(less())
 		.pipe(autoprefixer({
@@ -48,11 +48,11 @@ gulp.task('plugin-less', function () {
 		.pipe(gulp.dest('./build/'))
 		.pipe(gulp.dest('./example/static/'));
 });
-gulp.task('example-html', function () {
+gulp.task('example-html', function() {
 	gulp.src('./src/example/html/**/*.html')
 		.pipe(gulp.dest('./example/'));
 });
-gulp.task('example-js', function () {
+gulp.task('example-js', function() {
 	gulp.src('./src/example/js/**/*.js')
 		.pipe(concat('init.js'))
 		.pipe(gulp.dest('./example/static/'))
@@ -60,11 +60,11 @@ gulp.task('example-js', function () {
 		.pipe(streamify(uglify()))
 		.pipe(gulp.dest('./example/static/'));
 });
-gulp.task('example-less', function () {
+gulp.task('example-less', function() {
 	gulp.src('./src/example/less/core.less')
 		.pipe(less())
 		.pipe(autoprefixer({
-			browsers: ['last 2 versions'],
+			browsers: ['last 3 versions'],
 			cascade: false
 		}))
 		.pipe(rename('style.css'))
@@ -75,7 +75,7 @@ gulp.task('example-less', function () {
 		}))
 		.pipe(gulp.dest('./example/static/'));
 });
-gulp.task('webserver', function () {
+gulp.task('webserver', function() {
 	if (webServerNode) webServerNode.kill();
 	webServerNode = spawn('node', ['./webserver.js'], {
 		stdio: 'inherit'
@@ -83,10 +83,10 @@ gulp.task('webserver', function () {
 });
 
 var run = ['plugin-less', 'plugin-js', 'example-less', 'example-js', 'example-html', 'watch', 'webserver'];
-process.on('exit', function () {
+process.on('exit', function() {
 	if (webServerNode) webServerNode.kill();
 });
-process.on('SIGINT', function () {
+process.on('SIGINT', function() {
 	if (webServerNode) webServerNode.kill();
 	process.exit();
 });
