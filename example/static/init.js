@@ -18,16 +18,21 @@
 		}];
 		var options = {};
 		options.onUpdate = function(el, data) {
-			console.log(data);
+			/*console.log(data);*/
+			/*console.log('update');*/
 		};
 		options.onDelete = function(el, data) {
-			console.log(data);
+			/*console.log(data);*/
+			/*console.log('delete');*/
 		};
 		options.onInsert = function(el, data) {
-			console.log(data);
+			/*console.log(data);*/
+			/*console.log('insert');*/
 		};
 		var a = new Checklist(el, null, options);
-		a.insert(data[2]);
+		for (var i in data) {
+			a.insert(data[i]);
+		}
 	});
 
 }).call(this); /* not added */

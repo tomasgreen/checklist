@@ -117,6 +117,11 @@
 		});
 	}
 
+	function _getAttr(el, attrib) {
+		if (!el) return;
+		return el.getAttribute(attrib);
+	}
+
 	function _attr(els, attrib, value) {
 		_each(els, function(el) {
 			el.setAttribute(attrib, value);
@@ -171,10 +176,42 @@
 	function _getData(el) {
 		var t = el.querySelector('.todo-text');
 		return {
-			todo_id: el.getAttribute('todo-id'),
-			done: (el.getAttribute('done') === 'true'),
+			todo_id: _getAttr(el, 'todo-id'),
+			done: (_getAttr(el, 'done') === 'true'),
 			text: t.innerHTML
 		};
+	}
+
+	function _endOfString(t) {
+		return (t === undefined || _trim(t) === '' || t.length === _getCaret());
+	}
+
+	function _startOfString(t) {
+		return (t === undefined || _trim(t) === '' || _getCaret() <= 0);
+	}
+
+	function _specialKeyDown(ev) {
+		if (!ev) return false;
+		return (ev.altKey || ev.metaKey || ev.shiftKey || ev.ctrlKey);
+	}
+
+	function _getCaret() {
+		if (window.getSelection && window.getSelection().getRangeAt) {
+			var range = window.getSelection().getRangeAt(0);
+			var selectedObj = window.getSelection();
+			var rangeCount = 0;
+			var childNodes = selectedObj.anchorNode.parentNode.childNodes;
+			for (var i = 0; i < childNodes.length; i++) {
+				if (childNodes[i] == selectedObj.anchorNode) break;
+				if (childNodes[i].outerHTML) {
+					rangeCount += childNodes[i].outerHTML.length;
+				} else if (childNodes[i].nodeType == 3) {
+					rangeCount += childNodes[i].textContent.length;
+				}
+			}
+			return range.startOffset + rangeCount;
+		}
+		return -1;
 	}
 
 	/* ************************************
@@ -191,6 +228,7 @@
 		onDone: null,
 		onUpdate: null,
 		showDeleteButton: false,
+		insertOnBlur: true,
 		placeholder: 'Write here and press enter',
 		guidFunction: _guid
 	};
@@ -257,8 +295,14 @@
 		});
 	};
 	Base.prototype.update = function(todo) {
+		if (_trim(todo.text) === '') {
+			this.delete(todo);
+			return;
+		}
 		var el = this.listEl.querySelector('[todo-id="' + todo.todo_id + '"]');
-		if (!el) return;
+		if (!el || (_getAttr(el, 'done') == todo.done.toString() && _getAttr(el, 'data-original-text') == todo.text)) {
+			return;
+		}
 		var c = el.querySelector('.todo-checker');
 		_attr(el, 'done', todo.done);
 		_attr(el, 'data-original-text', todo.text);
@@ -271,34 +315,45 @@
 		var el = _findParent(ev.srcElement, 'todo');
 		var todo = _getData(el);
 		if (!ev.shiftKey && ev.keyCode == 13) {
-			if (_trim(todo.text) === '') {
-				this.delete(todo);
-			} else {
-				todo.done = !todo.done;
-				this.update(todo);
-			}
+			todo.done = !todo.done;
+			this.update(todo);
 			_stopEventPropagation(ev);
 		} else if ((ev.metaKey && ev.keyCode == 8) || (ev.keyCode == 46 && ev.shiftKey)) {
 			this.delete(todo);
 			_stopEventPropagation(ev);
-		} else if (ev.altKey && ev.keyCode == 38) {
-			if (el.previousSibling) el.previousSibling.querySelector('.todo-text').focus();
-			else this.insertTextEl.focus();
-			_stopEventPropagation(ev);
-		} else if (ev.altKey && ev.keyCode == 40) {
-			if (el.nextSibling) el.nextSibling.querySelector('.todo-text').focus();
-			_stopEventPropagation(ev);
+		} else if (!_specialKeyDown(ev) && (_startOfString(todo.text) || _endOfString(todo.text)) && ev.keyCode == 38) {
+			if (el.previousSibling) {
+				el.previousSibling.querySelector('.todo-text').focus();
+				_stopEventPropagation(ev);
+			} else {
+				this.insertTextEl.focus();
+				_stopEventPropagation(ev);
+			}
+		} else if (!_specialKeyDown(ev) && (_startOfString(todo.text) || _endOfString(todo.text)) && ev.keyCode == 40) {
+			if (el.nextSibling) {
+				el.nextSibling.querySelector('.todo-text').focus();
+				_stopEventPropagation(ev);
+			}
 		}
 	};
 	Base.prototype.insertBlurEvent = function(ev) {
 		var text = _trim(this.insertTextEl.innerHTML);
 		if (text === '' || text === null) {
 			this.insertTextEl.innerHTML = '';
+		} else if (this.opt.insertOnBlur) {
+			var todo = {
+				text: this.insertTextEl.innerHTML,
+				done: false
+			};
+			this.insert(todo);
+			this.insertTextEl.innerHTML = '';
+			_stopEventPropagation(ev);
 		}
 	};
 	Base.prototype.insertKeydownEvent = function(ev) {
 		var text = this.insertTextEl.innerHTML;
-		if (!ev.shiftKey && ev.keyCode == 13 && _trim(text) !== '') {
+		var trimmed = _trim(text);
+		if (!ev.shiftKey && ev.keyCode == 13 && trimmed !== '') {
 			var todo = {
 				text: text,
 				done: false
@@ -306,37 +361,25 @@
 			this.insert(todo);
 			this.insertTextEl.innerHTML = '';
 			_stopEventPropagation(ev);
-		} else if (ev.altKey && ev.keyCode == 40) {
+		} else if (trimmed === '' && ev.keyCode == 40) {
+			this.insertTextEl.innerHTML = '';
 			if (this.listEl.firstChild) this.listEl.firstChild.querySelector('.todo-text').focus();
 			_stopEventPropagation(ev);
 		}
 	};
 	Base.prototype.checkEvent = function(ev) {
 		var el = _findParent(ev.srcElement, 'todo');
-		var c = el.querySelector('.todo-checker');
 		var todo = _getData(el);
 		todo.done = !todo.done;
-		c.innerHTML = (todo.done) ? this.opt.iconChecked : this.opt.iconUnchecked;
-		_attr(el, 'done', todo.done);
-		if (this.opt.onUpdate) this.opt.onUpdate(el, todo);
-		_animateCSS(el, 'checklist-pulse');
+		this.update(todo);
 	};
 	Base.prototype.updateEvent = function(ev) {
 		var el = _findParent(ev.srcElement, 'todo');
-		var todo = _getData(el);
-		if (el.getAttribute('data-original-text') == todo.text) return;
-		_attr(el, 'data-original-text', todo.text);
-		if (this.opt.onUpdate) this.opt.onUpdate(el, todo);
-		_animateCSS(el, 'checklist-pulse');
+		this.update(_getData(el));
 	};
 	Base.prototype.deleteEvent = function(ev) {
 		var el = _findParent(ev.srcElement, 'todo');
-		var todo = _getData(el);
-		var _this = this;
-		_animateCSS(el, 'checklist-flipOutX', null, function(ev) {
-			if (_this.opt.onDelete) _this.opt.onDelete(el, todo);
-			_removeNode(el);
-		});
+		this.delete(_getData(el));
 		_stopEventPropagation(ev);
 	};
 	var BaseExtended = _extend(Base, function(container, data, options) {
