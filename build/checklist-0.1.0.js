@@ -265,6 +265,7 @@
 		el.querySelector('.todo-text').innerHTML = todo.text;
 		c.innerHTML = (todo.done) ? this.opt.iconChecked : this.opt.iconUnchecked;
 		_animateCSS(el, 'checklist-pulse');
+		if (this.opt.onUpdate) this.opt.onUpdate(el, todo);
 	};
 	Base.prototype.todoKeydownEvent = function(ev) {
 		var el = _findParent(ev.srcElement, 'todo');
